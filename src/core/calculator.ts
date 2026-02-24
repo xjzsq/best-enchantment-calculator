@@ -41,7 +41,7 @@ function penaltyCost(penalty: number): number {
 }
 
 /** Calculate the enchantment cost of an item as sacrifice (ignoring penalty) */
-function calcSacrificeCost(item: Item, isJava: boolean): number {
+function calcSacrificeCost(item: Item): number {
   let cost = 0;
   for (const e of item.enchantments) {
     const data = getEnchantById(e.enchantmentId);
@@ -49,8 +49,6 @@ function calcSacrificeCost(item: Item, isJava: boolean): number {
     const multiplier = item.isBook ? data.bookMultiplier : data.itemMultiplier;
     cost += multiplier * e.level;
   }
-  // For Java edition, include penalty in sacrifice cost for sorting purposes
-  if (!isJava) return cost;
   return cost;
 }
 
@@ -202,16 +200,15 @@ function findWeaponIndex(pool: Item[]): number {
 }
 
 /** Sort pool: by penalty ascending, then by enchant cost descending for books */
-function sortPool(pool: Item[], isJava: boolean): void {
+function sortPool(pool: Item[]): void {
   pool.sort((a, b) => {
     if (a.penalty !== b.penalty) return a.penalty - b.penalty;
-    // Within same penalty, sort by sacrifice cost descending
-    // But keep weapon (non-book) in place by treating it as highest priority
-    if (!a.isBook && b.isBook) return 0;
-    if (a.isBook && !b.isBook) return 0;
-    if (!a.isBook && !b.isBook) return 0;
-    // Both books: sort by cost descending
-    return calcSacrificeCost(b, isJava) - calcSacrificeCost(a, isJava);
+    // Within same penalty: non-book items (weapon) stay in place,
+    // books are sorted by sacrifice cost descending
+    if (a.isBook && b.isBook) {
+      return calcSacrificeCost(b) - calcSacrificeCost(a);
+    }
+    return 0;
   });
 }
 
@@ -249,7 +246,7 @@ export function calcDifficultyFirst(
   let mode = 0;
 
   while (pool.length > 1) {
-    sortPool(pool, isJava);
+    sortPool(pool);
     const { begin, end } = penaltyRange(pool, curPenalty);
 
     if (mode === 0) {
@@ -280,7 +277,6 @@ export function calcDifficultyFirst(
         const { result, cost } = preForge(target, sacrifice, isJava);
         result.id = newItemId();
         result.label = `步骤${steps.length + 1}结果`;
-        result.isBook = target.isBook;
         steps.push({ target, sacrifice, result, cost });
 
         // Replace weapon with result, remove sacrifice
@@ -294,7 +290,6 @@ export function calcDifficultyFirst(
         const { result, cost } = preForge(target, sacrifice, isJava);
         result.id = newItemId();
         result.label = `步骤${steps.length + 1}结果`;
-        result.isBook = target.isBook;
         steps.push({ target, sacrifice, result, cost });
 
         // Replace second item with result, remove first
@@ -319,7 +314,6 @@ export function calcDifficultyFirst(
       const { result, cost } = preForge(target, sacrifice, isJava);
       result.id = newItemId();
       result.label = `步骤${steps.length + 1}结果`;
-      result.isBook = target.isBook;
       steps.push({ target, sacrifice, result, cost });
 
       // Keep result at lower index, remove higher index
@@ -381,7 +375,7 @@ export function calcHamming(
 
   // Sort each level by sacrifice cost descending
   for (const level of levels) {
-    level.sort((a, b) => calcSacrificeCost(b, isJava) - calcSacrificeCost(a, isJava));
+    level.sort((a, b) => calcSacrificeCost(b) - calcSacrificeCost(a));
   }
 
   // Arrange items using Hamming weight for optimal binary tree merging
@@ -459,7 +453,6 @@ export function calcHamming(
       const { result, cost } = preForge(a, b, isJava);
       result.id = newItemId();
       result.label = `步骤${steps.length + 1}结果`;
-      result.isBook = a.isBook;
       steps.push({ target: a, sacrifice: b, result, cost });
     }
     if (arranged[i].length === 1 && i + 1 < arranged.length) {
