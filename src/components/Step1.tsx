@@ -22,8 +22,9 @@ export default function Step1({ appState, onNext }: Props) {
   const availableEnchantments = getEnchantmentsForWeapon(weaponIndex, edition === 0 ? 0 : 1);
 
   useEffect(() => {
+    const available = getEnchantmentsForWeapon(weaponIndex, edition === 0 ? 0 : 1);
     setInitialEnchantments(prev =>
-      prev.filter(e => availableEnchantments.some(ae => ae.id === e.enchantmentId))
+      prev.filter(e => available.some(ae => ae.id === e.enchantmentId))
     );
   }, [weaponIndex, edition]);
 
