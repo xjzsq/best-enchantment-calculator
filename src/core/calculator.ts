@@ -213,9 +213,8 @@ function hammingWeight(n: number): number {
   return count;
 }
 
-/** Check if any step exceeds 39 levels (Java "Too Expensive" limit) */
-function checkTooExpensive(steps: ForgeStep[], isJava: boolean): boolean {
-  if (!isJava) return false;
+/** Check if any step exceeds 39 levels ("Too Expensive" limit) */
+function checkTooExpensive(steps: ForgeStep[]): boolean {
   return steps.some(s => s.cost >= 40);
 }
 
@@ -326,7 +325,7 @@ export function calcDifficultyFirst(
   }
 
   const totalCost = steps.reduce((sum, s) => sum + s.cost, 0);
-  return { steps, totalCost, tooExpensive: checkTooExpensive(steps, isJava) };
+  return { steps, totalCost, tooExpensive: checkTooExpensive(steps) };
 }
 
 /**
@@ -436,6 +435,7 @@ export function calcHamming(
   }
 
   // Phase 3: Record forge steps from the arranged triangle
+  // Note: Do NOT carry odd items to next level - they are already there from simulation
   for (let i = 0; i < triangle.length; i++) {
     while (triangle[i].length > 1) {
       const a = triangle[i].shift()!;
@@ -445,11 +445,8 @@ export function calcHamming(
       result.label = `步骤${steps.length + 1}结果`;
       steps.push({ target: a, sacrifice: b, result, cost });
     }
-    if (triangle[i].length === 1 && i + 1 < triangle.length) {
-      triangle[i + 1].push(triangle[i].shift()!);
-    }
   }
 
   const totalCost = steps.reduce((sum, s) => sum + s.cost, 0);
-  return { steps, totalCost, tooExpensive: checkTooExpensive(steps, isJava) };
+  return { steps, totalCost, tooExpensive: checkTooExpensive(steps) };
 }

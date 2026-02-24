@@ -5,6 +5,7 @@ import Step2 from './components/Step2';
 import Step3 from './components/Step3';
 import type { EnchantLevel, Item, CalcResult } from './core/calculator';
 import { calcDifficultyFirst, calcHamming } from './core/calculator';
+import { getEnchantmentsForWeapon } from './data/enchantments';
 import './App.css';
 
 const { Title } = Typography;
@@ -35,7 +36,21 @@ export default function App() {
   const [result, setResult] = useState<CalcResult | null>(null);
 
   function handleStep1Next(state: Partial<AppState>) {
-    setAppState(prev => ({ ...prev, ...state }));
+    const newState = { ...appState, ...state };
+    // Filter target enchantments: remove those now at max level on the weapon
+    // and those no longer available for this weapon/edition
+    const available = getEnchantmentsForWeapon(
+      newState.weaponIndex,
+      newState.edition === 0 ? 0 : 1
+    );
+    const filteredTargets = newState.targetEnchantments.filter(te => {
+      const enchData = available.find(e => e.id === te.enchantmentId);
+      if (!enchData) return false; // enchantment not available for this weapon
+      const initial = newState.initialEnchantments.find(ie => ie.enchantmentId === te.enchantmentId);
+      if (initial && initial.level >= enchData.maxLevel) return false; // already at max level
+      return true;
+    });
+    setAppState({ ...newState, targetEnchantments: filteredTargets });
     setCurrent(1);
   }
 

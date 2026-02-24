@@ -63,22 +63,20 @@ export default function Step3({ result, appState, onReset, onBack }: Props) {
     );
   }
 
-  const isJava = appState.edition === 0;
-
   return (
     <div>
       <Title level={4}>附魔步骤（共 {result.steps.length} 步）</Title>
-      {result.tooExpensive && isJava && (
+      {result.tooExpensive && (
         <Alert
           message="过于昂贵！"
-          description="部分步骤的经验花费超过了39级，在Java版中铁砧将无法完成这些操作。请尝试调整附魔组合或减少初始惩罚值。"
+          description="部分步骤的经验花费超过了39级，铁砧将无法完成这些操作。请尝试调整附魔组合或减少初始惩罚值。"
           type="error"
           showIcon
           style={{ marginBottom: 12 }}
         />
       )}
       {result.steps.map((step, idx) => {
-        const stepTooExpensive = isJava && step.cost >= 40;
+        const stepTooExpensive = step.cost >= 40;
         return (
           <Card
             key={idx}
