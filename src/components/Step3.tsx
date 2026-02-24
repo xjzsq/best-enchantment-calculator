@@ -2,6 +2,8 @@ import { Button, Card, Tag, Typography, Space, Divider, Alert } from 'antd';
 import type { CalcResult, ForgeStep, EnchantLevel } from '../core/calculator';
 import type { AppState } from '../App';
 import { ENCHANTMENTS } from '../data/enchantments';
+import { WEAPONS, ENCHANTED_BOOK_ICON } from '../data/weapons';
+import { toRoman } from '../utils/roman';
 
 const { Text, Title } = Typography;
 
@@ -9,6 +11,7 @@ interface Props {
   result: CalcResult;
   appState: AppState;
   onReset: () => void;
+  onBack: () => void;
 }
 
 function EnchantTag({ el }: { el: EnchantLevel }) {
@@ -16,20 +19,25 @@ function EnchantTag({ el }: { el: EnchantLevel }) {
   if (!ench) return null;
   return (
     <Tag color="blue" style={{ marginBottom: 4 }}>
-      {ench.nameZh} {el.level}
+      {ench.nameZh} {toRoman(el.level)}
     </Tag>
   );
 }
 
-function ItemDisplay({ item, label }: { item: ForgeStep['target']; label: string }) {
+function ItemDisplay({ item, label, weaponIndex }: { item: ForgeStep['target']; label: string; weaponIndex: number }) {
+  const weapon = WEAPONS.find(w => w.index === weaponIndex);
+  const iconSrc = item.isBook ? ENCHANTED_BOOK_ICON : (weapon?.icon ?? '');
+  const iconAlt = item.isBook ? '附魔书' : (weapon?.nameZh ?? '物品');
+
   return (
     <div style={{ flex: 1, minWidth: 180 }}>
       <Text strong>{label}</Text>
-      <div style={{ marginTop: 4 }}>
+      <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <img src={iconSrc} alt={iconAlt} style={{ width: 24, height: 24, imageRendering: 'pixelated' }} />
         {item.isBook ? (
           <Tag color="green">附魔书</Tag>
         ) : (
-          <Tag color="purple">物品</Tag>
+          <Tag color="purple">{weapon?.nameZh ?? '物品'}</Tag>
         )}
         <Tag>惩罚值: {item.penalty}</Tag>
       </div>
@@ -42,12 +50,13 @@ function ItemDisplay({ item, label }: { item: ForgeStep['target']; label: string
   );
 }
 
-export default function Step3({ result, appState, onReset }: Props) {
+export default function Step3({ result, appState, onReset, onBack }: Props) {
   if (result.steps.length === 0) {
     return (
       <div>
         <Alert message="没有需要附魔的步骤。" type="info" />
         <div className="step-footer">
+          <Button onClick={onBack}>上一步</Button>
           <Button onClick={onReset}>重新开始</Button>
         </div>
       </div>
@@ -57,31 +66,44 @@ export default function Step3({ result, appState, onReset }: Props) {
   return (
     <div>
       <Title level={4}>附魔步骤（共 {result.steps.length} 步）</Title>
-      {result.steps.map((step, idx) => (
-        <Card
-          key={idx}
-          size="small"
+      {result.tooExpensive && (
+        <Alert
+          message="过于昂贵！"
+          description="部分步骤的经验花费超过了39级，铁砧将无法完成这些操作。请尝试调整附魔组合或减少初始惩罚值。"
+          type="error"
+          showIcon
           style={{ marginBottom: 12 }}
-          title={
-            <Space>
-              <Tag color="orange">第 {idx + 1} 步</Tag>
-              <Text>花费: <Text strong type="danger">{step.cost} 级经验</Text></Text>
-            </Space>
-          }
-        >
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-            <ItemDisplay item={step.target} label="目标（铁砧左侧）" />
-            <div style={{ display: 'flex', alignItems: 'center', padding: '20px 0' }}>
-              <Text style={{ fontSize: 20 }}>+</Text>
+        />
+      )}
+      {result.steps.map((step, idx) => {
+        const stepTooExpensive = step.cost >= 40;
+        return (
+          <Card
+            key={idx}
+            size="small"
+            style={{ marginBottom: 12, borderColor: stepTooExpensive ? '#ff4d4f' : undefined }}
+            title={
+              <Space>
+                <Tag color={stepTooExpensive ? 'red' : 'orange'}>第 {idx + 1} 步</Tag>
+                <Text>花费: <Text strong type="danger">{step.cost} 级经验</Text></Text>
+                {stepTooExpensive && <Tag color="red">过于昂贵!</Tag>}
+              </Space>
+            }
+          >
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+              <ItemDisplay item={step.target} label="目标（铁砧左侧）" weaponIndex={appState.weaponIndex} />
+              <div style={{ display: 'flex', alignItems: 'center', padding: '20px 0' }}>
+                <Text style={{ fontSize: 20 }}>+</Text>
+              </div>
+              <ItemDisplay item={step.sacrifice} label="牺牲品（铁砧右侧）" weaponIndex={appState.weaponIndex} />
+              <div style={{ display: 'flex', alignItems: 'center', padding: '20px 0' }}>
+                <Text style={{ fontSize: 20 }}>→</Text>
+              </div>
+              <ItemDisplay item={step.result} label="结果" weaponIndex={appState.weaponIndex} />
             </div>
-            <ItemDisplay item={step.sacrifice} label="牺牲品（铁砧右侧）" />
-            <div style={{ display: 'flex', alignItems: 'center', padding: '20px 0' }}>
-              <Text style={{ fontSize: 20 }}>→</Text>
-            </div>
-            <ItemDisplay item={step.result} label="结果" />
-          </div>
-        </Card>
-      ))}
+          </Card>
+        );
+      })}
 
       <Divider />
       <Card>
@@ -100,10 +122,17 @@ export default function Step3({ result, appState, onReset }: Props) {
             <Text>算法:</Text>
             <Text>{appState.algorithm}</Text>
           </div>
+          {result.calcTimeMs != null && (
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Text>计算用时:</Text>
+              <Text>{result.calcTimeMs.toFixed(1)} ms</Text>
+            </div>
+          )}
         </Space>
       </Card>
 
       <div className="step-footer">
+        <Button onClick={onBack}>上一步</Button>
         <Button type="primary" onClick={onReset}>重新开始</Button>
       </div>
     </div>
