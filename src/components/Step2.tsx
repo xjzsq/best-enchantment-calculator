@@ -49,10 +49,17 @@ export default function Step2({ appState, onBack, onCalculate }: Props) {
   }
 
   function isConflicted(ench: Enchantment): boolean {
-    return targetEnchantments.some(te => {
+    // Check conflicts with selected target enchantments
+    const conflictWithTarget = targetEnchantments.some(te => {
       const teEnch = availableEnchantments.find(e => e.id === te.enchantmentId);
       return teEnch?.conflicts.includes(ench.id) || ench.conflicts.includes(te.enchantmentId);
     });
+    // Check conflicts with initial enchantments from Step1
+    const conflictWithInitial = appState.initialEnchantments.some(ie => {
+      const ieEnch = availableEnchantments.find(e => e.id === ie.enchantmentId);
+      return ieEnch?.conflicts.includes(ench.id) || ench.conflicts.includes(ie.enchantmentId);
+    });
+    return conflictWithTarget || conflictWithInitial;
   }
 
   const columns = [
