@@ -3,7 +3,9 @@ import type { AppState } from '../App';
 import { getEnchantmentsForWeapon } from '../data/enchantments';
 import type { Enchantment } from '../data/enchantments';
 import type { EnchantLevel } from '../core/calculator';
-import { useState } from 'react';
+import { toRoman } from '../utils/roman';
+import { useState, useRef } from 'react';
+import type React from 'react';
 
 const { Text } = Typography;
 
@@ -17,14 +19,25 @@ export default function Step2({ appState, onBack, onCalculate }: Props) {
   const [algorithm, setAlgorithm] = useState<'DifficultyFirst' | 'Hamming'>(appState.algorithm);
   const [targetEnchantments, setTargetEnchantments] = useState<EnchantLevel[]>(appState.targetEnchantments);
   const [ignorePenalty, setIgnorePenalty] = useState(appState.ignorePenalty);
-  const [ignoreRepairing, setIgnoreRepairing] = useState(appState.ignoreRepairing);
+  const [savedLevels, setSavedLevels] = useState<Record<string, number>>({});
+  const inputMouseDown = useRef(false);
 
-  const availableEnchantments = getEnchantmentsForWeapon(appState.weaponIndex, appState.edition === 0 ? 0 : 1);
+  const availableEnchantments = getEnchantmentsForWeapon(appState.weaponIndex, appState.edition === 0 ? 0 : 1)
+    .filter(e => {
+      // Hide enchantments already at max level on the weapon
+      const initial = appState.initialEnchantments.find(ie => ie.enchantmentId === e.id);
+      return !(initial && initial.level >= e.maxLevel);
+    });
 
   function toggleEnchant(ench: Enchantment, checked: boolean) {
     if (checked) {
-      setTargetEnchantments(prev => [...prev, { enchantmentId: ench.id, level: 1 }]);
+      const level = savedLevels[ench.id] ?? ench.maxLevel;
+      setTargetEnchantments(prev => [...prev, { enchantmentId: ench.id, level }]);
     } else {
+      const current = targetEnchantments.find(e => e.enchantmentId === ench.id);
+      if (current) {
+        setSavedLevels(prev => ({ ...prev, [ench.id]: current.level }));
+      }
       setTargetEnchantments(prev => prev.filter(e => e.enchantmentId !== ench.id));
     }
   }
@@ -36,10 +49,17 @@ export default function Step2({ appState, onBack, onCalculate }: Props) {
   }
 
   function isConflicted(ench: Enchantment): boolean {
-    return targetEnchantments.some(te => {
+    // Check conflicts with selected target enchantments
+    const conflictWithTarget = targetEnchantments.some(te => {
       const teEnch = availableEnchantments.find(e => e.id === te.enchantmentId);
       return teEnch?.conflicts.includes(ench.id) || ench.conflicts.includes(te.enchantmentId);
     });
+    // Check conflicts with initial enchantments from Step1
+    const conflictWithInitial = appState.initialEnchantments.some(ie => {
+      const ieEnch = availableEnchantments.find(e => e.id === ie.enchantmentId);
+      return ieEnch?.conflicts.includes(ench.id) || ench.conflicts.includes(ie.enchantmentId);
+    });
+    return conflictWithTarget || conflictWithInitial;
   }
 
   const columns = [
@@ -83,6 +103,12 @@ export default function Step2({ appState, onBack, onCalculate }: Props) {
             max={record.maxLevel}
             value={sel.level}
             size="small"
+            onClick={e => e.stopPropagation()}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+              inputMouseDown.current = true;
+              setTimeout(() => { inputMouseDown.current = false; }, 300);
+            }}
             onChange={val => setLevel(record.id, val ?? 1)}
           />
         );
@@ -91,7 +117,7 @@ export default function Step2({ appState, onBack, onCalculate }: Props) {
     {
       title: '最高',
       width: 60,
-      render: (_: unknown, record: Enchantment) => record.maxLevel,
+      render: (_: unknown, record: Enchantment) => toRoman(record.maxLevel),
     },
   ];
 
@@ -108,15 +134,9 @@ export default function Step2({ appState, onBack, onCalculate }: Props) {
         </Form.Item>
 
         <Form.Item label="选项">
-          <Space direction="vertical">
-            <Space>
-              <Switch checked={ignorePenalty} onChange={setIgnorePenalty} />
-              <Text>忽略惩罚值（假设武器无使用次数）</Text>
-            </Space>
-            <Space>
-              <Switch checked={ignoreRepairing} onChange={setIgnoreRepairing} />
-              <Text>忽略修复（不计算修复费用）</Text>
-            </Space>
+          <Space>
+            <Switch checked={ignorePenalty} onChange={setIgnorePenalty} />
+            <Text>忽略累计惩罚</Text>
           </Space>
         </Form.Item>
 
@@ -128,6 +148,20 @@ export default function Step2({ appState, onBack, onCalculate }: Props) {
             size="small"
             pagination={false}
             scroll={{ y: 300 }}
+            onRow={(record) => {
+              const selected = targetEnchantments.some(e => e.enchantmentId === record.id);
+              const conflicted = !selected && isConflicted(record);
+              return {
+                onClick: (e: React.MouseEvent) => {
+                  if (inputMouseDown.current) return;
+                  if ((e.target as HTMLElement).closest('.ant-input-number')) return;
+                  if (!conflicted) {
+                    toggleEnchant(record, !selected);
+                  }
+                },
+                style: { cursor: conflicted ? 'not-allowed' : 'pointer' },
+              };
+            }}
           />
         </Form.Item>
       </Form>
@@ -137,7 +171,7 @@ export default function Step2({ appState, onBack, onCalculate }: Props) {
         <Button
           type="primary"
           disabled={!canCalculate}
-          onClick={() => onCalculate({ algorithm, targetEnchantments, ignorePenalty, ignoreRepairing })}
+          onClick={() => onCalculate({ algorithm, targetEnchantments, ignorePenalty })}
         >
           计算最优顺序
         </Button>

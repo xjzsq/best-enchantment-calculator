@@ -5,6 +5,7 @@ import Step2 from './components/Step2';
 import Step3 from './components/Step3';
 import type { EnchantLevel, Item, CalcResult } from './core/calculator';
 import { calcDifficultyFirst, calcHamming } from './core/calculator';
+import { getEnchantmentsForWeapon } from './data/enchantments';
 import './App.css';
 
 const { Title } = Typography;
@@ -17,7 +18,6 @@ export interface AppState {
   targetEnchantments: EnchantLevel[];
   algorithm: 'DifficultyFirst' | 'Hamming';
   ignorePenalty: boolean;
-  ignoreRepairing: boolean;
 }
 
 const defaultState: AppState = {
@@ -28,7 +28,6 @@ const defaultState: AppState = {
   targetEnchantments: [],
   algorithm: 'DifficultyFirst',
   ignorePenalty: false,
-  ignoreRepairing: false,
 };
 
 export default function App() {
@@ -37,7 +36,21 @@ export default function App() {
   const [result, setResult] = useState<CalcResult | null>(null);
 
   function handleStep1Next(state: Partial<AppState>) {
-    setAppState(prev => ({ ...prev, ...state }));
+    const newState = { ...appState, ...state };
+    // Filter target enchantments: remove those now at max level on the weapon
+    // and those no longer available for this weapon/edition
+    const available = getEnchantmentsForWeapon(
+      newState.weaponIndex,
+      newState.edition === 0 ? 0 : 1
+    );
+    const filteredTargets = newState.targetEnchantments.filter(te => {
+      const enchData = available.find(e => e.id === te.enchantmentId);
+      if (!enchData) return false; // enchantment not available for this weapon
+      const initial = newState.initialEnchantments.find(ie => ie.enchantmentId === te.enchantmentId);
+      if (initial && initial.level >= enchData.maxLevel) return false; // already at max level
+      return true;
+    });
+    setAppState({ ...newState, targetEnchantments: filteredTargets });
     setCurrent(1);
   }
 
@@ -51,16 +64,18 @@ export default function App() {
       label: '武器',
       isBook: false,
       enchantments: newState.initialEnchantments,
-      penalty: newState.ignorePenalty ? 0 : newState.initialPenalty,
+      penalty: newState.initialPenalty,
     };
 
     let calcResult: CalcResult;
+    const startTime = performance.now();
     if (newState.algorithm === 'DifficultyFirst') {
-      calcResult = calcDifficultyFirst(weapon, newState.targetEnchantments, isJava);
+      calcResult = calcDifficultyFirst(weapon, newState.targetEnchantments, isJava, newState.ignorePenalty);
     } else {
-      calcResult = calcHamming(weapon, newState.targetEnchantments, isJava);
+      calcResult = calcHamming(weapon, newState.targetEnchantments, isJava, newState.ignorePenalty);
     }
-    setResult(calcResult);
+    const calcTime = performance.now() - startTime;
+    setResult({ ...calcResult, calcTimeMs: calcTime });
     setCurrent(2);
   }
 
@@ -94,7 +109,7 @@ export default function App() {
           />
         )}
         {current === 2 && result && (
-          <Step3 result={result} appState={appState} onReset={handleReset} />
+          <Step3 result={result} appState={appState} onReset={handleReset} onBack={() => setCurrent(1)} />
         )}
       </Card>
     </div>
