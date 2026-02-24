@@ -56,7 +56,8 @@ function calcSacrificeCost(item: Item): number {
 export function preForge(
   target: Item,
   sacrifice: Item,
-  isJava: boolean
+  isJava: boolean,
+  ignorePenalty: boolean = false
 ): { result: Item; cost: number } {
   let cost = 0;
 
@@ -104,7 +105,9 @@ export function preForge(
   }
 
   // Penalty cost
-  cost += penaltyCost(target.penalty) + penaltyCost(sacrifice.penalty);
+  if (!ignorePenalty) {
+    cost += penaltyCost(target.penalty) + penaltyCost(sacrifice.penalty);
+  }
 
   const resultPenalty = Math.max(target.penalty, sacrifice.penalty) + 1;
 
@@ -197,7 +200,8 @@ function penaltyRange(pool: Item[], penalty: number): { begin: number; end: numb
 export function calcDifficultyFirst(
   weapon: Item,
   targetEnchantments: EnchantLevel[],
-  isJava: boolean
+  isJava: boolean,
+  ignorePenalty: boolean = false
 ): CalcResult {
   itemCounter = 0;
   const pool = buildPool(weapon, targetEnchantments);
@@ -235,7 +239,7 @@ export function calcDifficultyFirst(
 
         const target = pool[w];
         const sacrifice = pool[sacrificeIdx];
-        const { result, cost } = preForge(target, sacrifice, isJava);
+        const { result, cost } = preForge(target, sacrifice, isJava, ignorePenalty);
         result.id = newItemId();
         result.label = `步骤${steps.length + 1}结果`;
         steps.push({ target, sacrifice, result, cost });
@@ -248,7 +252,7 @@ export function calcDifficultyFirst(
         // Merge two items at curPenalty (first = target, second = sacrifice)
         const target = pool[begin];
         const sacrifice = pool[begin + 1];
-        const { result, cost } = preForge(target, sacrifice, isJava);
+        const { result, cost } = preForge(target, sacrifice, isJava, ignorePenalty);
         result.id = newItemId();
         result.label = `步骤${steps.length + 1}结果`;
         steps.push({ target, sacrifice, result, cost });
@@ -262,17 +266,17 @@ export function calcDifficultyFirst(
       const w = findWeaponIndex(pool);
       let targetIdx: number, sacrificeIdx: number;
 
-      if (w === 1) {
-        targetIdx = 1; // weapon
-        sacrificeIdx = 0;
+      if (w !== -1) {
+        targetIdx = w;
+        sacrificeIdx = w === 0 ? 1 : 0;
       } else {
-        targetIdx = 0; // weapon (at 0 or weapon not found, use 0)
+        targetIdx = 0;
         sacrificeIdx = 1;
       }
 
       const target = pool[targetIdx];
       const sacrifice = pool[sacrificeIdx];
-      const { result, cost } = preForge(target, sacrifice, isJava);
+      const { result, cost } = preForge(target, sacrifice, isJava, ignorePenalty);
       result.id = newItemId();
       result.label = `步骤${steps.length + 1}结果`;
       steps.push({ target, sacrifice, result, cost });
@@ -310,7 +314,8 @@ export function calcDifficultyFirst(
 export function calcHamming(
   weapon: Item,
   targetEnchantments: EnchantLevel[],
-  isJava: boolean
+  isJava: boolean,
+  ignorePenalty: boolean = false
 ): CalcResult {
   itemCounter = 0;
   const pool = buildPool(weapon, targetEnchantments);
@@ -331,7 +336,7 @@ export function calcHamming(
       if (i + 1 < currentLevel.length) {
         const target = currentLevel[i];
         const sacrifice = currentLevel[i + 1];
-        const { result, cost } = preForge(target, sacrifice, isJava);
+        const { result, cost } = preForge(target, sacrifice, isJava, ignorePenalty);
         result.id = newItemId();
         result.label = `步骤${steps.length + 1}结果`;
         steps.push({ target, sacrifice, result, cost });

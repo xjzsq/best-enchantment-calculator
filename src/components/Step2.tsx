@@ -5,6 +5,7 @@ import type { Enchantment } from '../data/enchantments';
 import type { EnchantLevel } from '../core/calculator';
 import { toRoman } from '../utils/roman';
 import { useState } from 'react';
+import type React from 'react';
 
 const { Text } = Typography;
 
@@ -18,7 +19,6 @@ export default function Step2({ appState, onBack, onCalculate }: Props) {
   const [algorithm, setAlgorithm] = useState<'DifficultyFirst' | 'Hamming'>(appState.algorithm);
   const [targetEnchantments, setTargetEnchantments] = useState<EnchantLevel[]>(appState.targetEnchantments);
   const [ignorePenalty, setIgnorePenalty] = useState(appState.ignorePenalty);
-  const [ignoreRepairing, setIgnoreRepairing] = useState(appState.ignoreRepairing);
 
   const availableEnchantments = getEnchantmentsForWeapon(appState.weaponIndex, appState.edition === 0 ? 0 : 1)
     .filter(e => {
@@ -115,15 +115,9 @@ export default function Step2({ appState, onBack, onCalculate }: Props) {
         </Form.Item>
 
         <Form.Item label="选项">
-          <Space direction="vertical">
-            <Space>
-              <Switch checked={ignorePenalty} onChange={setIgnorePenalty} />
-              <Text>忽略惩罚值（假设武器无使用次数）</Text>
-            </Space>
-            <Space>
-              <Switch checked={ignoreRepairing} onChange={setIgnoreRepairing} />
-              <Text>忽略修复（不计算修复费用）</Text>
-            </Space>
+          <Space>
+            <Switch checked={ignorePenalty} onChange={setIgnorePenalty} />
+            <Text>忽略累计惩罚</Text>
           </Space>
         </Form.Item>
 
@@ -139,7 +133,8 @@ export default function Step2({ appState, onBack, onCalculate }: Props) {
               const selected = targetEnchantments.some(e => e.enchantmentId === record.id);
               const conflicted = !selected && isConflicted(record);
               return {
-                onClick: () => {
+                onClick: (e: React.MouseEvent) => {
+                  if ((e.target as HTMLElement).closest('.ant-input-number')) return;
                   if (!conflicted) {
                     toggleEnchant(record, !selected);
                   }
@@ -156,7 +151,7 @@ export default function Step2({ appState, onBack, onCalculate }: Props) {
         <Button
           type="primary"
           disabled={!canCalculate}
-          onClick={() => onCalculate({ algorithm, targetEnchantments, ignorePenalty, ignoreRepairing })}
+          onClick={() => onCalculate({ algorithm, targetEnchantments, ignorePenalty })}
         >
           计算最优顺序
         </Button>

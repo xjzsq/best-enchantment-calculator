@@ -17,7 +17,6 @@ export interface AppState {
   targetEnchantments: EnchantLevel[];
   algorithm: 'DifficultyFirst' | 'Hamming';
   ignorePenalty: boolean;
-  ignoreRepairing: boolean;
 }
 
 const defaultState: AppState = {
@@ -28,7 +27,6 @@ const defaultState: AppState = {
   targetEnchantments: [],
   algorithm: 'DifficultyFirst',
   ignorePenalty: false,
-  ignoreRepairing: false,
 };
 
 export default function App() {
@@ -51,15 +49,15 @@ export default function App() {
       label: '武器',
       isBook: false,
       enchantments: newState.initialEnchantments,
-      penalty: newState.ignorePenalty ? 0 : newState.initialPenalty,
+      penalty: newState.initialPenalty,
     };
 
     let calcResult: CalcResult;
     const startTime = performance.now();
     if (newState.algorithm === 'DifficultyFirst') {
-      calcResult = calcDifficultyFirst(weapon, newState.targetEnchantments, isJava);
+      calcResult = calcDifficultyFirst(weapon, newState.targetEnchantments, isJava, newState.ignorePenalty);
     } else {
-      calcResult = calcHamming(weapon, newState.targetEnchantments, isJava);
+      calcResult = calcHamming(weapon, newState.targetEnchantments, isJava, newState.ignorePenalty);
     }
     const calcTime = performance.now() - startTime;
     setResult({ ...calcResult, calcTimeMs: calcTime });

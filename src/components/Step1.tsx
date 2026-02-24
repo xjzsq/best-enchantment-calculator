@@ -6,6 +6,7 @@ import type { Enchantment } from '../data/enchantments';
 import type { EnchantLevel } from '../core/calculator';
 import { toRoman } from '../utils/roman';
 import { useState, useEffect } from 'react';
+import type React from 'react';
 
 const { Text } = Typography;
 
@@ -132,8 +133,9 @@ export default function Step1({ appState, onNext }: Props) {
             pagination={false}
             scroll={{ y: 300 }}
             onRow={(record) => ({
-              onClick: () => {
-                const selected = initialEnchantments.some(e => e.enchantmentId === record.id);
+              onClick: (e: React.MouseEvent) => {
+                if ((e.target as HTMLElement).closest('.ant-input-number')) return;
+                const selected = initialEnchantments.some(ie => ie.enchantmentId === record.id);
                 toggleEnchant(record, !selected);
               },
               style: { cursor: 'pointer' },
