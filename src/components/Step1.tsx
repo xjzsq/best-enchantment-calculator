@@ -4,6 +4,7 @@ import { WEAPONS } from '../data/weapons';
 import { getEnchantmentsForWeapon } from '../data/enchantments';
 import type { Enchantment } from '../data/enchantments';
 import type { EnchantLevel } from '../core/calculator';
+import { toRoman } from '../utils/roman';
 import { useState, useEffect } from 'react';
 
 const { Text } = Typography;
@@ -73,6 +74,7 @@ export default function Step1({ appState, onNext }: Props) {
             max={record.maxLevel}
             value={sel.level}
             size="small"
+            onClick={e => e.stopPropagation()}
             onChange={val => setLevel(record.id, val ?? 1)}
           />
         );
@@ -81,7 +83,7 @@ export default function Step1({ appState, onNext }: Props) {
     {
       title: '最高',
       width: 60,
-      render: (_: unknown, record: Enchantment) => record.maxLevel,
+      render: (_: unknown, record: Enchantment) => toRoman(record.maxLevel),
     },
   ];
 
@@ -99,10 +101,15 @@ export default function Step1({ appState, onNext }: Props) {
           <Select
             value={weaponIndex}
             onChange={setWeaponIndex}
-            style={{ width: 200 }}
+            style={{ width: 260 }}
             options={WEAPONS.map(w => ({
               value: w.index,
-              label: `${w.icon} ${w.nameZh} (${w.nameEn})`,
+              label: (
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <img src={w.icon} alt={w.nameEn} style={{ width: 20, height: 20, imageRendering: 'pixelated' }} />
+                  {w.nameZh} ({w.nameEn})
+                </span>
+              ),
             }))}
           />
         </Form.Item>
@@ -124,6 +131,13 @@ export default function Step1({ appState, onNext }: Props) {
             size="small"
             pagination={false}
             scroll={{ y: 300 }}
+            onRow={(record) => ({
+              onClick: () => {
+                const selected = initialEnchantments.some(e => e.enchantmentId === record.id);
+                toggleEnchant(record, !selected);
+              },
+              style: { cursor: 'pointer' },
+            })}
           />
         </Form.Item>
       </Form>

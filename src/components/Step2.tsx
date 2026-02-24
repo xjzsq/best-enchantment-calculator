@@ -3,6 +3,7 @@ import type { AppState } from '../App';
 import { getEnchantmentsForWeapon } from '../data/enchantments';
 import type { Enchantment } from '../data/enchantments';
 import type { EnchantLevel } from '../core/calculator';
+import { toRoman } from '../utils/roman';
 import { useState } from 'react';
 
 const { Text } = Typography;
@@ -88,6 +89,7 @@ export default function Step2({ appState, onBack, onCalculate }: Props) {
             max={record.maxLevel}
             value={sel.level}
             size="small"
+            onClick={e => e.stopPropagation()}
             onChange={val => setLevel(record.id, val ?? 1)}
           />
         );
@@ -96,7 +98,7 @@ export default function Step2({ appState, onBack, onCalculate }: Props) {
     {
       title: '最高',
       width: 60,
-      render: (_: unknown, record: Enchantment) => record.maxLevel,
+      render: (_: unknown, record: Enchantment) => toRoman(record.maxLevel),
     },
   ];
 
@@ -133,6 +135,16 @@ export default function Step2({ appState, onBack, onCalculate }: Props) {
             size="small"
             pagination={false}
             scroll={{ y: 300 }}
+            onRow={(record) => ({
+              onClick: () => {
+                const selected = targetEnchantments.some(e => e.enchantmentId === record.id);
+                const conflicted = !selected && isConflicted(record);
+                if (!conflicted) {
+                  toggleEnchant(record, !selected);
+                }
+              },
+              style: { cursor: isConflicted(record) && !targetEnchantments.some(e => e.enchantmentId === record.id) ? 'not-allowed' : 'pointer' },
+            })}
           />
         </Form.Item>
       </Form>

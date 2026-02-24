@@ -55,12 +55,14 @@ export default function App() {
     };
 
     let calcResult: CalcResult;
+    const startTime = performance.now();
     if (newState.algorithm === 'DifficultyFirst') {
       calcResult = calcDifficultyFirst(weapon, newState.targetEnchantments, isJava);
     } else {
       calcResult = calcHamming(weapon, newState.targetEnchantments, isJava);
     }
-    setResult(calcResult);
+    const calcTime = performance.now() - startTime;
+    setResult({ ...calcResult, calcTimeMs: calcTime });
     setCurrent(2);
   }
 

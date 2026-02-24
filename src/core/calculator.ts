@@ -24,6 +24,7 @@ export interface ForgeStep {
 export interface CalcResult {
   steps: ForgeStep[];
   totalCost: number;
+  calcTimeMs?: number;
 }
 
 function getEnchantById(id: string): Enchantment | undefined {
@@ -50,46 +51,6 @@ function calcSacrificeCost(item: Item): number {
     cost += multiplier * e.level;
   }
   return cost;
-}
-
-/** Forge two items and return the resulting item (without cost calculation) */
-function forgeItems(target: Item, sacrifice: Item): Item {
-  const resultEnchantments: EnchantLevel[] = [...target.enchantments];
-
-  for (const bEnch of sacrifice.enchantments) {
-    const bEnchData = getEnchantById(bEnch.enchantmentId);
-    if (!bEnchData) continue;
-
-    const conflictsWithTarget = target.enchantments.some(aEnch =>
-      hasConflict(bEnch.enchantmentId, aEnch.enchantmentId) ||
-      hasConflict(aEnch.enchantmentId, bEnch.enchantmentId)
-    );
-
-    if (conflictsWithTarget) continue;
-
-    const existingIdx = resultEnchantments.findIndex(e => e.enchantmentId === bEnch.enchantmentId);
-    if (existingIdx >= 0) {
-      const aLvl = resultEnchantments[existingIdx].level;
-      const bLvl = bEnch.level;
-      let combinedLevel: number;
-      if (aLvl === bLvl && aLvl < bEnchData.maxLevel) {
-        combinedLevel = aLvl + 1;
-      } else {
-        combinedLevel = Math.max(aLvl, bLvl);
-      }
-      resultEnchantments[existingIdx] = { enchantmentId: bEnch.enchantmentId, level: combinedLevel };
-    } else {
-      resultEnchantments.push({ enchantmentId: bEnch.enchantmentId, level: bEnch.level });
-    }
-  }
-
-  return {
-    id: '',
-    label: '',
-    isBook: target.isBook,
-    enchantments: resultEnchantments,
-    penalty: Math.max(target.penalty, sacrifice.penalty) + 1,
-  };
 }
 
 export function preForge(
@@ -340,11 +301,11 @@ export function calcDifficultyFirst(
 }
 
 /**
- * Hamming algorithm - reference: Dinosaur-MC/BestEnchSeq
+ * Hamming algorithm - binary tree merge
  *
- * Uses Hamming weight to arrange items in a binary tree structure
- * ensuring optimal merging order. High-cost items are placed at
- * positions with low Hamming weight so they get merged first.
+ * Arranges items in a sequence (weapon first, then books by cost descending)
+ * and merges them pairwise bottom-up in a binary tree structure.
+ * The weapon at position 0 ensures it is always the target (left side).
  */
 export function calcHamming(
   weapon: Item,
@@ -359,117 +320,29 @@ export function calcHamming(
     return { steps, totalCost: 0 };
   }
 
-  // Group items by penalty level
-  let maxPenalty = 0;
-  for (const item of pool) {
-    maxPenalty = Math.max(maxPenalty, item.penalty);
-  }
+  // Weapon stays first; sort books by sacrifice cost descending
+  const weaponItem = pool[0];
+  const books = pool.slice(1).sort((a, b) => calcSacrificeCost(b) - calcSacrificeCost(a));
+  let currentLevel = [weaponItem, ...books];
 
-  const levels: Item[][] = [];
-  for (let i = 0; i <= maxPenalty; i++) {
-    levels.push([]);
-  }
-  for (const item of pool) {
-    levels[item.penalty].push(item);
-  }
-
-  // Sort each level by sacrifice cost descending
-  for (const level of levels) {
-    level.sort((a, b) => calcSacrificeCost(b) - calcSacrificeCost(a));
-  }
-
-  // Arrange items using Hamming weight for optimal binary tree merging
-  const arranged: Item[][] = [];
-  for (let i = 0; i < levels.length; i++) {
-    arranged.push([]);
-    const n = levels[i].length;
-    if (n === 0) continue;
-
-    const tempItems = [...levels[i]];
-    const result: (Item | null)[] = new Array(n).fill(null);
-
-    // Place weapon at position 0
-    const weaponIdx = tempItems.findIndex(item => !item.isBook);
-    if (weaponIdx !== -1) {
-      result[0] = tempItems.splice(weaponIdx, 1)[0];
-    }
-
-    // Place remaining items by Hamming weight order
-    for (let hw = weaponIdx !== -1 ? 1 : 0; hw < n && tempItems.length > 0; hw++) {
-      for (let pos = 0; pos < n && tempItems.length > 0; pos++) {
-        if (result[pos] !== null) continue;
-        if (hammingWeight(pos) === hw) {
-          result[pos] = tempItems.shift()!;
-        }
-      }
-    }
-
-    // Fill any remaining gaps
-    for (let pos = 0; pos < n && tempItems.length > 0; pos++) {
-      if (result[pos] === null) {
-        result[pos] = tempItems.shift()!;
-      }
-    }
-
-    levels[i] = result.filter((item): item is Item => item !== null);
-
-    // Merge pairs within this level, carry results to next level
-    while (levels[i].length > 1) {
-      const a = levels[i].shift()!;
-      const b = levels[i].shift()!;
-      const merged = forgeItems(a, b);
-      merged.id = newItemId();
-
-      // Ensure levels array is large enough
-      while (levels.length <= i + 1 || levels.length <= merged.penalty) {
-        levels.push([]);
-      }
-
-      if (!merged.isBook) {
-        // Weapon result goes to next level
-        levels[i + 1].push(merged);
+  while (currentLevel.length > 1) {
+    const nextLevel: Item[] = [];
+    for (let i = 0; i < currentLevel.length; i += 2) {
+      if (i + 1 < currentLevel.length) {
+        const target = currentLevel[i];
+        const sacrifice = currentLevel[i + 1];
+        const { result, cost } = preForge(target, sacrifice, isJava);
+        result.id = newItemId();
+        result.label = `步骤${steps.length + 1}结果`;
+        steps.push({ target, sacrifice, result, cost });
+        nextLevel.push(result);
       } else {
-        // Book result goes to its penalty level
-        levels[merged.penalty].push(merged);
+        nextLevel.push(currentLevel[i]);
       }
     }
-
-    // If one item left, carry to next level
-    if (levels[i].length === 1) {
-      while (levels.length <= i + 1) {
-        levels.push([]);
-      }
-      levels[i + 1].push(levels[i].shift()!);
-    }
-
-    arranged[i] = result.filter((item): item is Item => item !== null);
-  }
-
-  // Record actual forge steps from the arranged triangle
-  for (let i = 0; i < arranged.length; i++) {
-    while (arranged[i].length > 1) {
-      const a = arranged[i].shift()!;
-      const b = arranged[i].shift()!;
-      const { result, cost } = preForge(a, b, isJava);
-      result.id = newItemId();
-      result.label = `步骤${steps.length + 1}结果`;
-      steps.push({ target: a, sacrifice: b, result, cost });
-    }
-    if (arranged[i].length === 1 && i + 1 < arranged.length) {
-      arranged[i + 1].unshift(arranged[i].shift()!);
-    }
+    currentLevel = nextLevel;
   }
 
   const totalCost = steps.reduce((sum, s) => sum + s.cost, 0);
   return { steps, totalCost };
-}
-
-/** Calculate the Hamming weight (number of 1 bits) of a non-negative integer */
-function hammingWeight(n: number): number {
-  let count = 0;
-  while (n > 0) {
-    if (n % 2 === 1) count++;
-    n = Math.floor(n / 2);
-  }
-  return count;
 }
