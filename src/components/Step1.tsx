@@ -51,16 +51,26 @@ export default function Step1({ appState, onNext }: Props) {
     );
   }
 
+  function isConflicted(ench: Enchantment): boolean {
+    return initialEnchantments.some(ie => {
+      if (ie.enchantmentId === ench.id) return false;
+      const ieEnch = availableEnchantments.find(e => e.id === ie.enchantmentId);
+      return ieEnch?.conflicts.includes(ench.id) || ench.conflicts.includes(ie.enchantmentId);
+    });
+  }
+
   const columns = [
     {
       title: '选择',
       width: 60,
       render: (_: unknown, record: Enchantment) => {
         const selected = initialEnchantments.some(e => e.enchantmentId === record.id);
+        const conflicted = !selected && isConflicted(record);
         return (
           <input
             type="checkbox"
             checked={selected}
+            disabled={conflicted}
             onChange={ev => toggleEnchant(record, ev.target.checked)}
           />
         );
@@ -68,7 +78,15 @@ export default function Step1({ appState, onNext }: Props) {
     },
     {
       title: '附魔',
-      render: (_: unknown, record: Enchantment) => `${record.nameZh} (${record.nameEn})`,
+      render: (_: unknown, record: Enchantment) => {
+        const conflicted = !initialEnchantments.some(e => e.enchantmentId === record.id) && isConflicted(record);
+        return (
+          <Text type={conflicted ? 'secondary' : undefined}>
+            {record.nameZh} ({record.nameEn})
+            {conflicted && ' [冲突]'}
+          </Text>
+        );
+      },
     },
     {
       title: '等级',
@@ -143,16 +161,21 @@ export default function Step1({ appState, onNext }: Props) {
             rowKey="id"
             size="small"
             pagination={false}
-            scroll={{ y: 300 }}
-            onRow={(record) => ({
-              onClick: (e: React.MouseEvent) => {
-                if (inputMouseDown.current) return;
-                if ((e.target as HTMLElement).closest('.ant-input-number')) return;
-                const selected = initialEnchantments.some(ie => ie.enchantmentId === record.id);
-                toggleEnchant(record, !selected);
-              },
-              style: { cursor: 'pointer' },
-            })}
+            scroll={{ y: 240 }}
+            onRow={(record) => {
+              const selected = initialEnchantments.some(ie => ie.enchantmentId === record.id);
+              const conflicted = !selected && isConflicted(record);
+              return {
+                onClick: (e: React.MouseEvent) => {
+                  if (inputMouseDown.current) return;
+                  if ((e.target as HTMLElement).closest('.ant-input-number')) return;
+                  if (!conflicted) {
+                    toggleEnchant(record, !selected);
+                  }
+                },
+                style: { cursor: conflicted ? 'not-allowed' : 'pointer' },
+              };
+            }}
           />
         </Form.Item>
       </Form>
