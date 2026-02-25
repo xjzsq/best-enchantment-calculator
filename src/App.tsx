@@ -112,6 +112,14 @@ export default function App() {
           <Step3 result={result} appState={appState} onReset={handleReset} onBack={() => setCurrent(1)} />
         )}
       </Card>
+      <div className="app-footer">
+        最佳附魔顺序计算器 &copy;2025 Crafted with ❤ by{' '}
+        <a href="https://xjzsq.cn" target="_blank" rel="noreferrer">xjzsq</a>,
+        {' '}Powered by{' '}
+        <a href="https://reactjs.org/" target="_blank" rel="noreferrer">React</a>
+        {' '}|{' '}
+        <a href="https://github.com/xjzsq/best-enchantment-calculator" target="_blank" rel="noreferrer">GitHub</a>
+      </div>
     </div>
   );
 }
