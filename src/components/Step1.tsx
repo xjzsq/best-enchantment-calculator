@@ -161,7 +161,7 @@ export default function Step1({ appState, onNext }: Props) {
             rowKey="id"
             size="small"
             pagination={false}
-            scroll={{ y: 300 }}
+            scroll={{ y: 240 }}
             onRow={(record) => {
               const selected = initialEnchantments.some(ie => ie.enchantmentId === record.id);
               const conflicted = !selected && isConflicted(record);

@@ -93,7 +93,20 @@ export default function App() {
 
   return (
     <Layout className="app-container">
-      <Layout.Content>
+      <a
+        href="https://github.com/xjzsq/best-enchantment-calculator"
+        className="github-corner"
+        target="_blank"
+        rel="noreferrer"
+        aria-label="View source on GitHub"
+      >
+        <svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true" style={{ fill: '#151513', color: '#fff' }}>
+          <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z" />
+          <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style={{ transformOrigin: '130px 106px' }} className="octo-arm" />
+          <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.7,65.4 C194.3,69.0 197.4,73.1 199.8,77.4 C213.5,80.1 215.9,84.8 215.9,84.8 C212.4,93.0 206.6,95.9 205.0,96.6 C204.8,102.4 202.6,107.8 198.0,112.5 C181.6,128.9 168.0,122.5 157.4,114.1 C157.2,116.4 156.4,120.0 153.9,123.2 L141.9,135.1 C140.8,136.2 142.2,140.0 142.3,139.9 L115.0,115.0 Z" fill="currentColor" className="octo-body" />
+        </svg>
+      </a>
+      <Layout.Content style={{ padding: '24px 24px 0' }}>
         <Title level={2} style={{ textAlign: 'center', margin: '24px 0' }}>
           最佳附魔顺序计算器
         </Title>
@@ -119,8 +132,6 @@ export default function App() {
         <a href="https://xjzsq.cn" target="_blank" rel="noreferrer">xjzsq</a>,
         {' '}Powered by{' '}
         <a href="https://reactjs.org/" target="_blank" rel="noreferrer">React</a>
-        {' '}|{' '}
-        <a href="https://github.com/xjzsq/best-enchantment-calculator" target="_blank" rel="noreferrer">GitHub</a>
       </Layout.Footer>
     </Layout>
   );
