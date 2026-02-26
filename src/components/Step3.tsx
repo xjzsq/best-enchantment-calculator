@@ -17,10 +17,11 @@ interface Props {
 
 function EnchantTag({ el }: { el: EnchantLevel }) {
   const ench = ENCHANTMENTS.find(e => e.id === el.enchantmentId);
+  const { locale } = useLocale();
   if (!ench) return null;
   return (
     <Tag color="blue" style={{ marginBottom: 4 }}>
-      {ench.nameZh} {toRoman(el.level)}
+      {locale === 'zh' ? ench.nameZh : ench.nameEn} {toRoman(el.level)}
     </Tag>
   );
 }

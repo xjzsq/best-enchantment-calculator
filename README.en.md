@@ -1,4 +1,4 @@
-# MC Optimal Enchantment Order Calculator
+# MC Optimal Enchanting Order Calculator
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![中文 README](https://img.shields.io/badge/README-中文-blue)](README.md)

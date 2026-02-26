@@ -86,9 +86,7 @@ export default function Step2({ appState, onBack, onCalculate }: Props) {
       minWidth: 160,
       render: (_: unknown, record: Enchantment) => {
         const conflicted = !targetEnchantments.some(e => e.enchantmentId === record.id) && isConflicted(record);
-        const name = locale === 'zh'
-          ? `${record.nameZh} (${record.nameEn})`
-          : `${record.nameEn} (${record.nameZh})`;
+        const name = locale === 'zh' ? record.nameZh : record.nameEn;
         return (
           <Text type={conflicted ? 'secondary' : undefined}>
             {name}

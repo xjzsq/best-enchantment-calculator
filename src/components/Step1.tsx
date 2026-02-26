@@ -83,9 +83,7 @@ export default function Step1({ appState, onNext }: Props) {
       minWidth: 160,
       render: (_: unknown, record: Enchantment) => {
         const conflicted = !initialEnchantments.some(e => e.enchantmentId === record.id) && isConflicted(record);
-        const name = locale === 'zh'
-          ? `${record.nameZh} (${record.nameEn})`
-          : `${record.nameEn} (${record.nameZh})`;
+        const name = locale === 'zh' ? record.nameZh : record.nameEn;
         return (
           <Text type={conflicted ? 'secondary' : undefined}>
             {name}
@@ -144,7 +142,7 @@ export default function Step1({ appState, onNext }: Props) {
               label: (
                 <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <img src={w.icon} alt={w.nameEn} style={{ width: 20, height: 20, imageRendering: 'pixelated' }} />
-                  {locale === 'zh' ? `${w.nameZh} (${w.nameEn})` : `${w.nameEn} (${w.nameZh})`}
+                  {locale === 'zh' ? w.nameZh : w.nameEn}
                 </span>
               ),
             }))}
