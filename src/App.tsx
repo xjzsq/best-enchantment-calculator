@@ -96,7 +96,7 @@ export default function App() {
   return (
     <Layout className="app-container">
       <a
-        href="https://github.com/xjzsq/mc-optimal-enchantment-order-calculator"
+        href="https://github.com/xjzsq/mc-optimal-enchanting-order-calculator"
         className="github-corner"
         target="_blank"
         rel="noreferrer"
@@ -121,7 +121,7 @@ export default function App() {
           </Button>
         </div>
         <Card style={{ maxWidth: 900, margin: '0 auto', padding: '24px' }}>
-          <Steps current={current} items={steps} style={{ marginBottom: 32 }} />
+          <Steps current={current} items={steps} style={{ marginBottom: 16 }} />
           {current === 0 && (
             <Step1 appState={appState} onNext={handleStep1Next} />
           )}

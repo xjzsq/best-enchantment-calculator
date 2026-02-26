@@ -90,7 +90,7 @@ const zh: Translations = {
   conflicted: '[冲突]',
 
   colLevel: '等级',
-  labelEdition: '游戏版本',
+  labelEdition: 'MC 版本',
   javaEdition: 'Java 版',
   bedrockEdition: '基岩版',
   labelWeapon: '物品类型',
@@ -157,7 +157,7 @@ const en: Translations = {
   javaEdition: 'Java Edition',
   bedrockEdition: 'Bedrock Edition',
   labelWeapon: 'Item Type',
-  labelPenalty: 'Prior Work',
+  labelPenalty: 'Prior Work (Times Used on Anvil)',
   labelInitialEnchants: 'Existing Enchantments on Item (Optional)',
   nextStep: 'Next',
 
