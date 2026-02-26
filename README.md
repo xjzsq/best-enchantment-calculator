@@ -1,9 +1,9 @@
-# MC最优附魔顺序计算器
+# MC 最优附魔顺序计算器
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![English README](https://img.shields.io/badge/README-English-blue)](README.en.md)
 
-[**在线使用**](https://xjzsq.github.io/mc-optimal-enchantment-order-calculator/)
+[**在线使用**](https://xjzsq.github.io/mc-optimal-enchanting-order-calculator/)
 
 ## 简介
 
@@ -12,21 +12,22 @@
 ## 功能
 
 - **支持 Java 版 / 基岩版**：可选择游戏版本，计算结果将基于对应版本的附魔权重和冲突规则。
-- **武器 / 工具选择**：涵盖剑、弓、弩、三叉戟、镐、斧、锹、锄、头盔、胸甲、护腿、靴子、盾牌等。
-- **初始附魔配置**：支持设置武器/防具/工具上已有的附魔及其等级，以及当前的惩罚值（附魔惩罚次数）。
+- **附魔物品选择**：涵盖剑、弓、弩、三叉戟、镐、斧、锹、锄、头盔、胸甲、护腿、靴子、盾牌等。
+- **初始附魔配置**：支持设置物品已有的附魔及其等级，以及当前的累计惩罚（已使用铁砧次数）。
 - **目标附魔选择**：自由选择需要附魔的附魔种类和等级，自动过滤冲突附魔。
 - **两种计算算法**：
   - **DifficultyFirst（难度优先）**：每次优先合并代价最高的附魔，降低整体经验消耗。
   - **Hamming（海明距离法）**：基于惩罚等级分组与二进制海明权重排列，进一步优化合并顺序。
-- **忽略惩罚模式**：可选择忽略"Too Expensive"（过于昂贵）限制，纯粹计算理论最优顺序。
+- **忽略累计惩罚模式**：可选择忽略"Too Expensive"（过于昂贵）限制，纯粹计算理论最优顺序。
 - **分步展示结果**：以步骤卡片形式清晰展示每一步的合并操作、消耗经验值及最终总经验值。
 - **自动检测过于昂贵**：当合并代价超过 39 级时，自动提示该步骤代价过高。
+- **支持中英双语**：界面支持中文与英文切换，可根据偏好选择语言。
 
 ## 如何启动
 
 ### 在线使用
 
-直接访问：[https://xjzsq.github.io/mc-optimal-enchantment-order-calculator/](https://xjzsq.github.io/mc-optimal-enchantment-order-calculator/)
+直接访问：[https://xjzsq.github.io/mc-optimal-enchanting-order-calculator/](https://xjzsq.github.io/mc-optimal-enchanting-order-calculator/)
 
 ### 本地开发
 
@@ -34,8 +35,8 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/xjzsq/mc-optimal-enchantment-order-calculator.git
-cd mc-optimal-enchantment-order-calculator
+git clone https://github.com/xjzsq/mc-optimal-enchanting-order-calculator.git
+cd mc-optimal-enchanting-order-calculator
 
 # 安装依赖
 npm install

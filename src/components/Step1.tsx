@@ -7,6 +7,7 @@ import type { EnchantLevel } from '../core/calculator';
 import { toRoman } from '../utils/roman';
 import { useState, useEffect, useRef } from 'react';
 import type React from 'react';
+import { useLocale } from '../i18n/useLocale';
 
 const { Text } = Typography;
 
@@ -22,6 +23,7 @@ export default function Step1({ appState, onNext }: Props) {
   const [initialPenalty, setInitialPenalty] = useState<number>(appState.initialPenalty);
   const [savedLevels, setSavedLevels] = useState<Record<string, number>>({});
   const inputMouseDown = useRef(false);
+  const { t, locale } = useLocale();
 
   const availableEnchantments = getEnchantmentsForWeapon(weaponIndex, edition === 0 ? 0 : 1);
 
@@ -61,7 +63,7 @@ export default function Step1({ appState, onNext }: Props) {
 
   const columns = [
     {
-      title: '选择',
+      title: t.colSelect,
       width: 60,
       render: (_: unknown, record: Enchantment) => {
         const selected = initialEnchantments.some(e => e.enchantmentId === record.id);
@@ -77,19 +79,21 @@ export default function Step1({ appState, onNext }: Props) {
       },
     },
     {
-      title: '附魔',
+      title: t.colEnchant,
+      minWidth: 160,
       render: (_: unknown, record: Enchantment) => {
         const conflicted = !initialEnchantments.some(e => e.enchantmentId === record.id) && isConflicted(record);
+        const name = locale === 'zh' ? record.nameZh : record.nameEn;
         return (
           <Text type={conflicted ? 'secondary' : undefined}>
-            {record.nameZh} ({record.nameEn})
-            {conflicted && ' [冲突]'}
+            {name}
+            {conflicted && ` ${t.conflicted}`}
           </Text>
         );
       },
     },
     {
-      title: '等级',
+      title: t.colLevel,
       width: 120,
       render: (_: unknown, record: Enchantment) => {
         const sel = initialEnchantments.find(e => e.enchantmentId === record.id);
@@ -112,7 +116,7 @@ export default function Step1({ appState, onNext }: Props) {
       },
     },
     {
-      title: '最高',
+      title: t.colMaxLevel,
       width: 60,
       render: (_: unknown, record: Enchantment) => toRoman(record.maxLevel),
     },
@@ -121,14 +125,14 @@ export default function Step1({ appState, onNext }: Props) {
   return (
     <div>
       <Form layout="vertical">
-        <Form.Item label="游戏版本">
+        <Form.Item label={t.labelEdition}>
           <Radio.Group value={edition} onChange={e => setEdition(e.target.value)}>
-            <Radio value={0}>Java版</Radio>
-            <Radio value={1}>基岩版</Radio>
+            <Radio value={0}>{t.javaEdition}</Radio>
+            <Radio value={1}>{t.bedrockEdition}</Radio>
           </Radio.Group>
         </Form.Item>
 
-        <Form.Item label="武器/工具类型">
+        <Form.Item label={t.labelWeapon}>
           <Select
             value={weaponIndex}
             onChange={setWeaponIndex}
@@ -138,14 +142,14 @@ export default function Step1({ appState, onNext }: Props) {
               label: (
                 <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <img src={w.icon} alt={w.nameEn} style={{ width: 20, height: 20, imageRendering: 'pixelated' }} />
-                  {w.nameZh} ({w.nameEn})
+                  {locale === 'zh' ? w.nameZh : w.nameEn}
                 </span>
               ),
             }))}
           />
         </Form.Item>
 
-        <Form.Item label="初始惩罚值（已使用铁砧次数）">
+        <Form.Item label={t.labelPenalty}>
           <InputNumber
             min={0}
             max={10}
@@ -154,14 +158,14 @@ export default function Step1({ appState, onNext }: Props) {
           />
         </Form.Item>
 
-        <Form.Item label="装备已有的附魔（可选）">
+        <Form.Item label={t.labelInitialEnchants}>
           <Table
             dataSource={availableEnchantments}
             columns={columns}
             rowKey="id"
             size="small"
             pagination={false}
-            scroll={{ y: 240 }}
+            scroll={{ y: 240, x: 'max-content' }}
             onRow={(record) => {
               const selected = initialEnchantments.some(ie => ie.enchantmentId === record.id);
               const conflicted = !selected && isConflicted(record);
@@ -182,7 +186,7 @@ export default function Step1({ appState, onNext }: Props) {
 
       <div className="step-footer">
         <Button type="primary" onClick={() => onNext({ edition, weaponIndex, initialEnchantments, initialPenalty })}>
-          下一步
+          {t.nextStep}
         </Button>
       </div>
     </div>

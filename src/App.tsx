@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Steps, Card, Typography, Layout } from 'antd';
+import { Steps, Card, Typography, Layout, Button } from 'antd';
 import Step1 from './components/Step1';
 import Step2 from './components/Step2';
 import Step3 from './components/Step3';
 import type { EnchantLevel, Item, CalcResult } from './core/calculator';
 import { calcDifficultyFirst, calcHamming } from './core/calculator';
 import { getEnchantmentsForWeapon } from './data/enchantments';
+import { useLocale } from './i18n/useLocale';
 import './App.css';
 
 const { Title } = Typography;
@@ -34,6 +35,7 @@ export default function App() {
   const [current, setCurrent] = useState(0);
   const [appState, setAppState] = useState<AppState>(defaultState);
   const [result, setResult] = useState<CalcResult | null>(null);
+  const { locale, setLocale, t } = useLocale();
 
   function handleStep1Next(state: Partial<AppState>) {
     const newState = { ...appState, ...state };
@@ -61,7 +63,7 @@ export default function App() {
     const isJava = newState.edition === 0;
     const weapon: Item = {
       id: 'weapon',
-      label: '武器',
+      label: t.weaponLabel,
       isBook: false,
       enchantments: newState.initialEnchantments,
       penalty: newState.initialPenalty,
@@ -86,19 +88,19 @@ export default function App() {
   }
 
   const steps = [
-    { title: '选择装备', description: '选择版本、武器和初始附魔' },
-    { title: '目标附魔', description: '选择算法和目标附魔' },
-    { title: '计算结果', description: '查看最优附魔顺序' },
+    { title: t.step1Title, description: t.step1Desc },
+    { title: t.step2Title, description: t.step2Desc },
+    { title: t.step3Title, description: t.step3Desc },
   ];
 
   return (
     <Layout className="app-container">
       <a
-        href="https://github.com/xjzsq/best-enchantment-calculator"
+        href="https://github.com/xjzsq/mc-optimal-enchanting-order-calculator"
         className="github-corner"
         target="_blank"
         rel="noreferrer"
-        aria-label="View source on GitHub"
+        aria-label={t.viewOnGitHub}
       >
         <svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true" style={{ fill: '#151513', color: '#fff' }}>
           <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z" />
@@ -107,10 +109,18 @@ export default function App() {
         </svg>
       </a>
       <Layout.Content style={{ padding: '24px 24px 0' }}>
-        <Title level={2} style={{ textAlign: 'center', margin: '24px 0' }}>
-          最佳附魔顺序计算器
-        </Title>
-        <Card style={{ maxWidth: 900, margin: '0 auto', padding: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, margin: '24px 0' }}>
+          <Title level={2} style={{ margin: 0 }}>
+            {t.appTitle}
+          </Title>
+          <Button
+            size="small"
+            onClick={() => setLocale(locale === 'zh' ? 'en' : 'zh')}
+          >
+            {locale === 'zh' ? 'EN' : '中文'}
+          </Button>
+        </div>
+        <Card style={{ maxWidth: 900, margin: '0 auto', padding: '24px 24px 0px' }}>
           <Steps current={current} items={steps} style={{ marginBottom: 32 }} />
           {current === 0 && (
             <Step1 appState={appState} onNext={handleStep1Next} />
@@ -128,10 +138,11 @@ export default function App() {
         </Card>
       </Layout.Content>
       <Layout.Footer style={{ textAlign: 'center' }}>
-        最佳附魔顺序计算器 &copy;2026 Crafted with ❤ by{' '}
-        <a href="https://xjzsq.cn" target="_blank" rel="noreferrer">xjzsq</a>,
-        {' '}Powered by{' '}
+        {t.footerText} &copy;2026 {t.craftedBy}{' '}
+        <a href="https://xjzsq.cn" target="_blank" rel="noreferrer">xjzsq</a>
+        {t.craftedByPost}{' '}{t.poweredByLabel}{' '}
         <a href="https://reactjs.org/" target="_blank" rel="noreferrer">React</a>
+        {t.poweredByPost}
       </Layout.Footer>
     </Layout>
   );
