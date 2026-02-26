@@ -6,6 +6,7 @@ import type { EnchantLevel } from '../core/calculator';
 import { toRoman } from '../utils/roman';
 import { useState, useRef } from 'react';
 import type React from 'react';
+import { useLocale } from '../i18n/useLocale';
 
 const { Text } = Typography;
 
@@ -21,6 +22,7 @@ export default function Step2({ appState, onBack, onCalculate }: Props) {
   const [ignorePenalty, setIgnorePenalty] = useState(appState.ignorePenalty);
   const [savedLevels, setSavedLevels] = useState<Record<string, number>>({});
   const inputMouseDown = useRef(false);
+  const { t, locale } = useLocale();
 
   const availableEnchantments = getEnchantmentsForWeapon(appState.weaponIndex, appState.edition === 0 ? 0 : 1)
     .filter(e => {
@@ -64,7 +66,7 @@ export default function Step2({ appState, onBack, onCalculate }: Props) {
 
   const columns = [
     {
-      title: '选择',
+      title: t.colSelect,
       width: 60,
       render: (_: unknown, record: Enchantment) => {
         const selected = targetEnchantments.some(e => e.enchantmentId === record.id);
@@ -80,19 +82,23 @@ export default function Step2({ appState, onBack, onCalculate }: Props) {
       },
     },
     {
-      title: '附魔',
+      title: t.colEnchant,
+      minWidth: 160,
       render: (_: unknown, record: Enchantment) => {
         const conflicted = !targetEnchantments.some(e => e.enchantmentId === record.id) && isConflicted(record);
+        const name = locale === 'zh'
+          ? `${record.nameZh} (${record.nameEn})`
+          : `${record.nameEn} (${record.nameZh})`;
         return (
           <Text type={conflicted ? 'secondary' : undefined}>
-            {record.nameZh} ({record.nameEn})
-            {conflicted && ' [冲突]'}
+            {name}
+            {conflicted && ` ${t.conflicted}`}
           </Text>
         );
       },
     },
     {
-      title: '目标等级',
+      title: t.colTargetLevel,
       width: 120,
       render: (_: unknown, record: Enchantment) => {
         const sel = targetEnchantments.find(e => e.enchantmentId === record.id);
@@ -115,7 +121,7 @@ export default function Step2({ appState, onBack, onCalculate }: Props) {
       },
     },
     {
-      title: '最高',
+      title: t.colMaxLevel,
       width: 60,
       render: (_: unknown, record: Enchantment) => toRoman(record.maxLevel),
     },
@@ -126,28 +132,28 @@ export default function Step2({ appState, onBack, onCalculate }: Props) {
   return (
     <div>
       <Form layout="vertical">
-        <Form.Item label="计算算法">
+        <Form.Item label={t.labelAlgorithm}>
           <Radio.Group value={algorithm} onChange={e => setAlgorithm(e.target.value)}>
-            <Radio value="DifficultyFirst">难度优先 (DifficultyFirst)</Radio>
-            <Radio value="Hamming">汉明算法 (Hamming)</Radio>
+            <Radio value="DifficultyFirst">{t.difficultyFirst}</Radio>
+            <Radio value="Hamming">{t.hamming}</Radio>
           </Radio.Group>
         </Form.Item>
 
-        <Form.Item label="选项">
+        <Form.Item label={t.labelOptions}>
           <Space>
             <Switch checked={ignorePenalty} onChange={setIgnorePenalty} />
-            <Text>忽略累计惩罚</Text>
+            <Text>{t.ignorePenaltyLabel}</Text>
           </Space>
         </Form.Item>
 
-        <Form.Item label="目标附魔">
+        <Form.Item label={t.labelTargetEnchants}>
           <Table
             dataSource={availableEnchantments}
             columns={columns}
             rowKey="id"
             size="small"
             pagination={false}
-            scroll={{ y: 300 }}
+            scroll={{ y: 300, x: 'max-content' }}
             onRow={(record) => {
               const selected = targetEnchantments.some(e => e.enchantmentId === record.id);
               const conflicted = !selected && isConflicted(record);
@@ -167,13 +173,13 @@ export default function Step2({ appState, onBack, onCalculate }: Props) {
       </Form>
 
       <div className="step-footer">
-        <Button onClick={onBack}>上一步</Button>
+        <Button onClick={onBack}>{t.prevStep}</Button>
         <Button
           type="primary"
           disabled={!canCalculate}
           onClick={() => onCalculate({ algorithm, targetEnchantments, ignorePenalty })}
         >
-          计算最优顺序
+          {t.calculate}
         </Button>
       </div>
     </div>
