@@ -120,8 +120,8 @@ export default function App() {
             {locale === 'zh' ? 'EN' : '中文'}
           </Button>
         </div>
-        <Card style={{ maxWidth: 900, margin: '0 auto', padding: '24px' }}>
-          <Steps current={current} items={steps} style={{ marginBottom: 16 }} />
+        <Card style={{ maxWidth: 900, margin: '0 auto', padding: '24px 24px 0px' }}>
+          <Steps current={current} items={steps} style={{ marginBottom: 32 }} />
           {current === 0 && (
             <Step1 appState={appState} onNext={handleStep1Next} />
           )}
